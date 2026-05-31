@@ -5,6 +5,7 @@ import LeftSidebar from './components/sidebar/left/LeftSidebar';
 import RightSidebar from './components/sidebar/right/RightSidebar';
 import Workspace from './components/workspace/Workspace';
 import StatusBar from './components/StatusBar';
+import WindowResizeFrame from './components/window/WindowResizeFrame';
 import { useDocumentStore } from './store/useDocumentStore';
 
 const App: React.FC = () => {
@@ -42,6 +43,9 @@ const App: React.FC = () => {
 
       {/* ── Status Bar ── */}
       <StatusBar />
+
+      {/* ── Window resize frame + handles (position:fixed, outside layout) ── */}
+      <WindowResizeFrame />
     </div>
   );
 };

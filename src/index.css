@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* ── Window chrome theme variables ──────────────────────────────────────────
+   Matches the titlebar bg so the top border blends in, while the side/bottom
+   border is visible against the light workspace background.               */
+:root {
+  --titlebar-bg:   #1a1a1a;
+  --frame-border:  #1a1a1a;
+}
+
 /* ── Custom scrollbar ───────────────────────────────────────────── */
 * {
   scrollbar-width: thin;
