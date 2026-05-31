@@ -190,6 +190,13 @@ interface DocumentStore {
   // Actions — Outline
   setOutline: (nodes: OutlineNode[]) => void;
 
+  // Actions — Document lifecycle
+  newDocument: () => void;
+  // TODO: replace this placeholder once file I/O (open/save/recent files) is implemented.
+  // It should clear the associated file path, remove recent-file linkage for this session,
+  // and wipe any persisted document-session metadata (e.g. from localStorage or Tauri store plugin).
+  clearOpenedFileReferencePlaceholder: () => void;
+
   // Actions — UI
   setLeftSidebarOpen: (open: boolean) => void;
   setRightSidebarOpen: (open: boolean) => void;
@@ -229,6 +236,38 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
   showRuler: true,
   showGrid: false,
   darkMode: false,
+
+  // Document lifecycle
+  newDocument: () => {
+    // Use Date.now() in the page ID so React sees a genuinely new key and remounts
+    // PageEditor with a fresh Tiptap instance — no imperative setContent() needed.
+    pageCounter = 2;
+    const freshPage: PageData = {
+      id: `page-1-${Date.now()}`,
+      title: 'Page 1',
+      content: '<p></p>',
+      wordCount: 0,
+      characterCount: 0,
+    };
+    get().clearOpenedFileReferencePlaceholder();
+    set({
+      meta: { ...DEFAULT_META, createdAt: new Date(), modifiedAt: new Date() },
+      pages: [freshPage],
+      activePageId: freshPage.id,
+      activeEditor: null,
+      outline: [],
+      selectedStyleId: 'normal',
+      formatState: { ...DEFAULT_FORMAT },
+    });
+  },
+
+  clearOpenedFileReferencePlaceholder: () => {
+    // TODO: when file I/O is implemented, this function must:
+    //   1. clear the store's `openedFilePath` field (to be added)
+    //   2. remove this session from the recent-files list
+    //   3. wipe any persisted session metadata (Tauri store plugin / localStorage)
+    // For now this is intentionally a no-op so all callers can already reference it.
+  },
 
   // Document actions
   updateMeta: (partial) =>

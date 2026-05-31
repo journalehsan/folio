@@ -1,18 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Minus, Square, X,
-  FolderOpen, Save, FileDown, Printer,
-  Undo2, Redo2, Settings,
+  FilePlus, FolderOpen, Save, Search, Settings,
   Sun, Moon,
 } from 'lucide-react';
 import { minimize, toggleMaximize, closeWindow, checkIsMaximized } from '../../tauri/window';
 import { useDocumentStore } from '../../store/useDocumentStore';
+import MenuBar from './MenuBar';
 
 const TitleBar: React.FC = () => {
   const [isMaximized, setIsMaximized] = useState(false);
-  const { darkMode, setDarkMode } = useDocumentStore();
+  const [menuBarVisible, setMenuBarVisible] = useState(true);
 
-  // Track maximized state so we can show the right restore icon
+  const { darkMode, setDarkMode, newDocument, clearOpenedFileReferencePlaceholder } =
+    useDocumentStore();
+
+  // ── Maximized state sync ─────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
     const sync = async () => {
@@ -24,87 +27,93 @@ const TitleBar: React.FC = () => {
     return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
-  // Apply dark mode class to document root
+  // ── Dark mode class on <html> ─────────────────────────────────────────────
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
   }, [darkMode]);
 
-  const quickActions = [
-    { icon: <FolderOpen size={12} />, title: 'Open (Ctrl+O)' },
-    { icon: <Save size={12} />, title: 'Save (Ctrl+S)' },
-    { icon: <FileDown size={12} />, title: 'Export to PDF' },
-    { icon: <Printer size={12} />, title: 'Print (Ctrl+P)' },
-  ];
+  // ── Reveal menubar on any pointer entry into the titlebar ─────────────────
+  const handleTitleBarMouseEnter = useCallback(() => {
+    setMenuBarVisible(true);
+  }, []);
 
-  const editActions = [
-    { icon: <Undo2 size={12} />, title: 'Undo (Ctrl+Z)' },
-    { icon: <Redo2 size={12} />, title: 'Redo (Ctrl+Y)' },
+  const handleMenuBarHide = useCallback(() => {
+    setMenuBarVisible(false);
+  }, []);
+
+  // ── Quick actions ─────────────────────────────────────────────────────────
+  const handleNew = useCallback(() => {
+    clearOpenedFileReferencePlaceholder();
+    newDocument();
+  }, [newDocument, clearOpenedFileReferencePlaceholder]);
+
+  const quickActions = [
+    { icon: <FilePlus  size={12} />, title: 'New Document (Ctrl+N)', onClick: handleNew },
+    { icon: <FolderOpen size={12} />, title: 'Open… (Ctrl+O)',        onClick: undefined },
+    { icon: <Save       size={12} />, title: 'Save (Ctrl+S)',          onClick: undefined },
+    { icon: <Search     size={12} />, title: 'Find & Replace (Ctrl+H)',onClick: undefined },
+    { icon: <Settings   size={12} />, title: 'Settings',               onClick: undefined },
   ];
 
   return (
-    <div className="h-9 flex items-center bg-[#1a1a1a] text-white select-none flex-shrink-0 z-50">
-      {/* Drag region — app icon + name */}
+    // data-tauri-drag-region on the root acts as a fallback drag area for any
+    // pixel not covered by an interactive element (e.g. the hidden MenuBar area).
+    // Tauri skips drag when the pointer is directly over a button or input.
+    <div
+      className="h-9 flex items-center bg-[#1a1a1a] text-white select-none flex-shrink-0 z-50"
+      data-tauri-drag-region=""
+      onMouseEnter={handleTitleBarMouseEnter}
+    >
+      {/* ── App icon + name (explicit drag) ─────────────────────────────────── */}
       <div
-        className="flex items-center pl-3 gap-2 h-full cursor-default"
+        className="flex items-center pl-3 gap-2 h-full cursor-default flex-shrink-0"
         data-tauri-drag-region=""
       >
         <div className="w-4 h-4 rounded bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center flex-shrink-0 pointer-events-none">
           <span className="text-[8px] text-white font-bold leading-none">F</span>
         </div>
         <span className="text-[11px] text-neutral-300 font-medium pointer-events-none">
-          Folio — Word Processor
+          Folio
         </span>
       </div>
 
-      {/* Flex spacer — still draggable */}
+      {/* ── Menubar (auto-hide, NOT a drag region) ───────────────────────────
+           When hidden (opacity-0 pointer-events-none), mouse events fall through
+           to the root data-tauri-drag-region, so dragging still works there. */}
+      <div className="flex-shrink-0 pl-1">
+        <MenuBar visible={menuBarVisible} onHide={handleMenuBarHide} />
+      </div>
+
+      {/* ── Flex spacer (explicit drag) ──────────────────────────────────────── */}
       <div className="flex-1 h-full" data-tauri-drag-region="" />
 
-      {/* Quick-action buttons — NOT draggable */}
+      {/* ── Quick-action icon buttons (NOT draggable) ────────────────────────── */}
       <div className="flex items-center gap-0.5 px-2">
         {quickActions.map((a, i) => (
           <button
             key={i}
             title={a.title}
-            className="w-7 h-7 flex items-center justify-center rounded text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
+            onClick={a.onClick}
+            disabled={!a.onClick}
+            className="w-7 h-7 flex items-center justify-center rounded text-neutral-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-40 disabled:cursor-default"
           >
             {a.icon}
           </button>
         ))}
-
-        <div className="w-px h-4 bg-white/15 mx-1" />
-
-        {editActions.map((a, i) => (
-          <button
-            key={i}
-            title={a.title}
-            className="w-7 h-7 flex items-center justify-center rounded text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
-          >
-            {a.icon}
-          </button>
-        ))}
-
-        <div className="w-px h-4 bg-white/15 mx-1" />
-
-        <button
-          title="Settings"
-          className="w-7 h-7 flex items-center justify-center rounded text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
-        >
-          <Settings size={12} />
-        </button>
       </div>
 
-      {/* Window controls — NOT draggable */}
+      {/* ── Window controls ──────────────────────────────────────────────────── */}
       <div className="flex items-center h-full">
         {/* Dark / Light toggle */}
         <button
-          title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          title={darkMode ? 'Light mode' : 'Dark mode'}
           onClick={() => setDarkMode(!darkMode)}
           className="w-9 h-full flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
         >
           {darkMode ? <Sun size={12} /> : <Moon size={12} />}
         </button>
 
-        <div className="w-px h-4 bg-white/15" />
+        <div className="w-px h-4 bg-white/15 mx-0.5" />
 
         <button
           title="Minimize"
@@ -123,8 +132,11 @@ const TitleBar: React.FC = () => {
           className="w-11 h-full flex items-center justify-center hover:bg-white/10 transition-colors"
         >
           {isMaximized ? (
-            /* Two overlapping squares = restore icon */
-            <svg width="10" height="10" viewBox="0 0 10 10" className="text-neutral-300" fill="none" stroke="currentColor" strokeWidth="1.2">
+            <svg
+              width="10" height="10" viewBox="0 0 10 10"
+              className="text-neutral-300" fill="none"
+              stroke="currentColor" strokeWidth="1.2"
+            >
               <rect x="2" y="0" width="8" height="8" rx="0.5" />
               <rect x="0" y="2" width="8" height="8" rx="0.5" fill="#1a1a1a" />
               <rect x="0" y="2" width="8" height="8" rx="0.5" />

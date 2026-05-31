@@ -5,12 +5,11 @@ import {
   List, ListOrdered, Indent, Outdent,
   Clipboard, ClipboardPaste, Scissors, Copy,
   Link, Image, Table, Code, Quote,
-  Undo, Redo, Printer, Save,
+  Undo, Redo,
   PanelLeft, PanelRight, Minus, Plus,
 } from 'lucide-react';
 import { useDocumentStore } from '../../store/useDocumentStore';
 import ToolbarButton from './ToolbarButton';
-import ToolbarSeparator from './ToolbarSeparator';
 import ToolbarGroup from './ToolbarGroup';
 import StyleDropdown from './StyleDropdown';
 import FontSizeControl from './FontSizeControl';
@@ -23,7 +22,6 @@ const TopToolbar: React.FC = () => {
     leftSidebarOpen, setLeftSidebarOpen,
     rightSidebarOpen, setRightSidebarOpen,
     zoom, setZoom,
-    meta,
   } = useDocumentStore();
 
   const cmd = () => activeEditor?.chain().focus();
@@ -32,65 +30,6 @@ const TopToolbar: React.FC = () => {
 
   return (
     <div className="flex flex-col bg-[#f3f3f3] border-b border-neutral-300 select-none">
-      {/* ── Tab-style menu bar ───────────────────────────── */}
-      <div className="flex items-center h-8 px-3 gap-1 border-b border-neutral-200 bg-[#f0f0f0]">
-        {/* App icon / name */}
-        <div className="flex items-center gap-1.5 mr-2">
-          <div className="w-5 h-5 rounded bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-            <span className="text-white text-[9px] font-bold">F</span>
-          </div>
-          <span className="text-[12px] font-semibold text-neutral-700">Folio</span>
-        </div>
-        <ToolbarSeparator />
-
-        {['File', 'Edit', 'View', 'Insert', 'Format', 'Tools', 'Help'].map((item) => (
-          <button
-            key={item}
-            className="text-[11px] text-neutral-600 hover:bg-neutral-200 px-2 py-0.5 rounded transition-colors h-6"
-          >
-            {item}
-          </button>
-        ))}
-
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* Document title */}
-        <input
-          className="text-[11px] text-neutral-600 bg-transparent text-center focus:outline-none focus:bg-white focus:border focus:border-blue-400 rounded px-2 py-0.5 max-w-[200px] font-medium"
-          defaultValue={meta.title}
-        />
-
-        <div className="flex-1" />
-
-        {/* Right controls */}
-        <button className="text-[11px] text-neutral-500 hover:text-neutral-700 flex items-center gap-1">
-          <Printer size={13} />
-        </button>
-        <button className="text-[11px] text-neutral-500 hover:text-neutral-700 flex items-center gap-1 ml-1">
-          <Save size={13} />
-        </button>
-        <ToolbarSeparator />
-        <button
-          onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}
-          className={cn(
-            'flex items-center justify-center w-6 h-6 rounded transition-colors text-neutral-500',
-            leftSidebarOpen ? 'bg-blue-100 text-blue-600' : 'hover:bg-neutral-200'
-          )}
-        >
-          <PanelLeft size={13} />
-        </button>
-        <button
-          onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
-          className={cn(
-            'flex items-center justify-center w-6 h-6 rounded transition-colors text-neutral-500',
-            rightSidebarOpen ? 'bg-blue-100 text-blue-600' : 'hover:bg-neutral-200'
-          )}
-        >
-          <PanelRight size={13} />
-        </button>
-      </div>
-
       {/* ── Ribbon toolbar ───────────────────────────────── */}
       <div className="flex items-end h-12 px-2 gap-0 overflow-x-auto overflow-y-hidden">
         {/* Undo / Redo */}
@@ -241,6 +180,32 @@ const TopToolbar: React.FC = () => {
 
         {/* Spacer */}
         <div className="flex-1" />
+
+        {/* Sidebar toggles */}
+        <div className="flex items-center gap-0.5 mb-1 mr-1">
+          <button
+            onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}
+            title="Toggle left sidebar"
+            className={cn(
+              'flex items-center justify-center w-6 h-6 rounded transition-colors text-neutral-500',
+              leftSidebarOpen ? 'bg-blue-100 text-blue-600' : 'hover:bg-neutral-200'
+            )}
+          >
+            <PanelLeft size={13} />
+          </button>
+          <button
+            onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
+            title="Toggle right sidebar"
+            className={cn(
+              'flex items-center justify-center w-6 h-6 rounded transition-colors text-neutral-500',
+              rightSidebarOpen ? 'bg-blue-100 text-blue-600' : 'hover:bg-neutral-200'
+            )}
+          >
+            <PanelRight size={13} />
+          </button>
+        </div>
+
+        <div className="w-px h-5 bg-neutral-300/70 mx-1 self-center" />
 
         {/* Zoom control */}
         <div className="flex items-center gap-1 mb-1 mr-2">
