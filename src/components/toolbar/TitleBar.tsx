@@ -14,7 +14,7 @@ import MenuBar from './MenuBar';
 // TODO: wire Enter to updateMeta({ title: draft }) once file I/O is ready.
 
 const DocumentTitleEditor: React.FC = () => {
-  const { meta } = useDocumentStore();
+  const { meta, updateMeta } = useDocumentStore();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft]     = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -24,7 +24,13 @@ const DocumentTitleEditor: React.FC = () => {
     setEditing(true);
   }, [meta.title]);
 
-  const exitEdit = useCallback(() => setEditing(false), []);
+  const commitEdit = useCallback((value: string) => {
+    const trimmed = value.trim();
+    if (trimmed) updateMeta({ title: trimmed });
+    setEditing(false);
+  }, [updateMeta]);
+
+  const cancelEdit = useCallback(() => setEditing(false), []);
 
   // Select all text when the input mounts
   useEffect(() => {
@@ -39,12 +45,10 @@ const DocumentTitleEditor: React.FC = () => {
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === 'Escape') {
-            e.preventDefault();
-            exitEdit();
-          }
+          if (e.key === 'Enter') { e.preventDefault(); commitEdit(draft); }
+          if (e.key === 'Escape') { e.preventDefault(); cancelEdit(); }
         }}
-        onBlur={exitEdit}
+        onBlur={cancelEdit}
         spellCheck={false}
         className="bg-white/10 text-[11px] text-white px-1.5 py-0.5 rounded outline-none border border-white/20 max-w-[220px] min-w-[60px]"
         // Width grows with content so it doesn't feel cramped
